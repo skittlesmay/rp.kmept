@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Группы
+model Group {
+  id                String             @id @default(cuid())
+  name              String             @unique // Например: "о-Ю 923/1"
+  schedules         Schedule[]
+  pushSubscriptions PushSubscription[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+// Push-подписки на уведомления
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique // URL для отправки push
+  p256dh    String   // Ключ шифрования
+  auth      String   // Ключ аутентификации
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([groupId])
+}
+
+// Расписание
+model Schedule {
+  id         String          @id @default(cuid())
+  groupId    String
+  group      Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  dayOfWeek  String          // Пн, Вт, Ср, Чт, Пт, Сб
+  pairNumber Int             // 1-6
+  timeStart  String          // "8:30"
+  timeEnd    String          // "10:00"
+  subject    String?
+  teacher    String?
+  room       String?         // Аудитория или "zoom"
+  versionId  String
+  version    ScheduleVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([groupId])
+  @@index([versionId])
+  @@index([dayOfWeek, pairNumber])
+}
+
+// Версии расписания (для истории)
+model ScheduleVersion {
+  id         String     @id @default(cuid())
+  uploadedAt DateTime   @default(now())
+  uploadedBy String     // ID администратора
+  fileName   String
+  isActive   Boolean    @default(true)
+  schedules  Schedule[]
+}
+
+// Администраторы
+model Admin {
+  id        String   @id @default(cuid())
+  login     String   @unique
+  password  String   // Хешированный
+  name      String
+  createdAt DateTime @default(now())
+}
+
+// Сессии для авторизации
+model Session {
+  id        String   @id @default(cuid())
+  userId    String?
+  adminId   String?
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Расписание физической культуры (общее для всех групп)
+model PhysicalEducationSchedule {
+  id        String   @id @default(cuid())
+  dayOfWeek String   // "ПОНЕДЕЛЬНИК", "СРЕДА", "ПЯТНИЦА" и т.д.
+  timeStart String   // "12:00"
+  timeEnd   String   // "13:20"
+  sortOrder Int      @default(0) // для сортировки по дням недели
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

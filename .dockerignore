@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Dependencies (устанавливаются в Docker)
+node_modules
+
+# Build artifacts
+.next
+out
+dist
+build
+
+# Database
+*.db
+*.db-journal
+prisma/*.db
+
+# Environment (передаётся через docker-compose)
+.env
+.env.*
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# Logs
+*.log
+logs
+
+# Temp
+tmp_*
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+
+# Tests
+coverage
